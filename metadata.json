@@ -1,0 +1,6 @@
+{
+  "name": "Window Numbering",
+  "description": "Atribui numeros as janelas na Visao Geral do GNOME",
+  "uuid": "window-numbering@local",
+  "shell-version": ["42", "43", "44", "45", "46"]
+}

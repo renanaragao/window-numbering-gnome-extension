@@ -1,0 +1,8 @@
+{
+  "name": "window-numbering-gnome-extension",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:renanaragao/window-numbering-gnome-extension.git",
+  "author": "Renan Aragão <renan@sisplan.com.br>",
+  "license": "MIT"
+}
