@@ -3,7 +3,7 @@ import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import St from "gi://St";
 import Clutter from "gi://Clutter";
 
-const VERSION = "v1.3.1 - Fixed Constructor Inspection";
+const VERSION = "v1.5.0 - Search Aware";
 
 export default class WindowNumberingExtension extends Extension {
   enable() {
@@ -11,41 +11,65 @@ export default class WindowNumberingExtension extends Extension {
     this._labels = [];
     this._windowsMap = new Map();
 
-    // Conecta ao evento quando a visão geral termina de ser desenhada
     this._shownId = Main.overview.connect("shown", () => this._drawLabels());
     this._hidingId = Main.overview.connect("hiding", () => this._clearLabels());
+
+    const searchEntry = Main.overview.searchEntry;
+    if (searchEntry) {
+      this._searchId = searchEntry.clutter_text.connect("text-changed", () => {
+        this._onSearchChanged();
+      });
+    }
   }
 
   disable() {
     console.log(`[Window-Numbering] Desativando ${VERSION}`);
     if (this._shownId) Main.overview.disconnect(this._shownId);
     if (this._hidingId) Main.overview.disconnect(this._hidingId);
+
+    const searchEntry = Main.overview.searchEntry;
+    if (this._searchId && searchEntry) {
+      searchEntry.clutter_text.disconnect(this._searchId);
+    }
+
     this._clearLabels();
     this._removeKeyHandler();
+  }
+
+  _onSearchChanged() {
+    const searchText = Main.overview.searchEntry.get_text().trim();
+    const isSearching = searchText.length > 0;
+
+    this._labels.forEach((label) => {
+      label.visible = !isSearching;
+    });
   }
 
   _drawLabels() {
     this._clearLabels();
     this._windowsMap.clear();
 
-    // Varre o container global do Overview em busca dos cards das janelas
-    const previews = this._findPreviews(Main.layoutManager.overviewGroup);
+    const activeWorkspace = global.workspace_manager.get_active_workspace();
+    const validWindows = activeWorkspace
+      .list_windows()
+      .filter((w) => w.showing_on_its_workspace() && !w.is_skip_taskbar());
+
+    const allPreviews = this._findPreviews(Main.layoutManager.overviewGroup);
     let count = 0;
 
-    previews.forEach((preview) => {
+    allPreviews.forEach((preview) => {
       if (count >= 9) return;
 
-      // Garante que a thumbnail está visível no monitor ativo
-      if (!preview.get_mapped || !preview.get_mapped()) return;
-
       const metaWin = preview.metaWindow || preview._metaWindow;
-      if (!metaWin) return;
+      if (!metaWin || !validWindows.includes(metaWin)) return;
+
+      if (typeof preview.get_mapped === "function" && !preview.get_mapped())
+        return;
 
       count++;
       const numberStr = count.toString();
       this._windowsMap.set(numberStr, metaWin);
 
-      // Pega as coordenadas exatas da thumbnail desenhada na tela
       const [x, y] = preview.get_transformed_position();
 
       const label = new St.Label({
@@ -55,11 +79,11 @@ export default class WindowNumberingExtension extends Extension {
           background-color: #3584e4;
           color: white;
           font-weight: bold;
-          font-size: 20px;
-          border-radius: 14px;
-          padding: 6px 12px;
+          font-size: 18px;
+          border-radius: 12px;
+          padding: 5px 11px;
           border: 2px solid white;
-          box-shadow: 0px 4px 10px rgba(0,0,0,0.8);
+          box-shadow: 0px 4px 8px rgba(0,0,0,0.6);
         `,
       });
 
@@ -68,22 +92,20 @@ export default class WindowNumberingExtension extends Extension {
       this._labels.push(label);
     });
 
+    this._onSearchChanged();
     this._setupKeyHandler();
   }
 
-  // Busca recursiva segura pelas thumbnails na árvore visual do Clutter
   _findPreviews(node) {
     let found = [];
     if (!node) return found;
 
-    // Detecta se o elemento é o card de miniatura da janela (WindowPreview)
-    const isPreview = node.metaWindow || node._metaWindow;
-    const hasPreviewClass =
+    const metaWin = node.metaWindow || node._metaWindow;
+    if (
+      metaWin &&
       node.constructor &&
-      (node.constructor.name === "WindowPreview" ||
-        node.toString().includes("WindowPreview"));
-
-    if (isPreview && hasPreviewClass) {
+      node.constructor.name.includes("WindowPreview")
+    ) {
       found.push(node);
     } else if (typeof node.get_children === "function") {
       const children = node.get_children();
@@ -96,25 +118,26 @@ export default class WindowNumberingExtension extends Extension {
 
   _setupKeyHandler() {
     this._removeKeyHandler();
-    this._keyPressId = global.stage.connect(
-      "key-press-event",
-      (actor, event) => {
-        if (!Main.overview.visible) return Clutter.EVENT_PROPAGATE;
+    this._keyPressId = global.stage.connect("key-press-event", (_, event) => {
+      if (!Main.overview.visible) return Clutter.EVENT_PROPAGATE;
 
-        const symbol = event.get_key_symbol();
-        const keyName = Clutter.keyval_name(symbol);
+      // Se o usuário está digitando algo na busca, ignora a ativação por número
+      const searchText = Main.overview.searchEntry.get_text().trim();
+      if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
 
-        if (/^[1-9]$/.test(keyName)) {
-          const win = this._windowsMap.get(keyName);
-          if (win) {
-            Main.overview.hide();
-            win.activate(global.get_current_time());
-            return Clutter.EVENT_STOP;
-          }
+      const symbol = event.get_key_symbol();
+      const keyName = Clutter.keyval_name(symbol);
+
+      if (/^[1-9]$/.test(keyName)) {
+        const win = this._windowsMap.get(keyName);
+        if (win) {
+          Main.overview.hide();
+          win.activate(global.get_current_time());
+          return Clutter.EVENT_STOP;
         }
-        return Clutter.EVENT_PROPAGATE;
-      },
-    );
+      }
+      return Clutter.EVENT_PROPAGATE;
+    });
   }
 
   _removeKeyHandler() {
