@@ -3,7 +3,37 @@ import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import St from "gi://St";
 import Clutter from "gi://Clutter";
 
-const VERSION = "v1.5.0 - Search Aware";
+const VERSION = "v1.7.0 - Full Alphabet No-Shift";
+
+// Alfabeto completo (de A a Z)
+const KEYS = [
+  "A",
+  "B",
+  "C",
+  "D",
+  "E",
+  "F",
+  "G",
+  "H",
+  "I",
+  "J",
+  "K",
+  "L",
+  "M",
+  "N",
+  "O",
+  "P",
+  "Q",
+  "R",
+  "S",
+  "T",
+  "U",
+  "V",
+  "W",
+  "X",
+  "Y",
+  "Z",
+];
 
 export default class WindowNumberingExtension extends Extension {
   enable() {
@@ -58,7 +88,7 @@ export default class WindowNumberingExtension extends Extension {
     let count = 0;
 
     allPreviews.forEach((preview) => {
-      if (count >= 9) return;
+      if (count >= KEYS.length) return;
 
       const metaWin = preview.metaWindow || preview._metaWindow;
       if (!metaWin || !validWindows.includes(metaWin)) return;
@@ -66,14 +96,16 @@ export default class WindowNumberingExtension extends Extension {
       if (typeof preview.get_mapped === "function" && !preview.get_mapped())
         return;
 
+      const keyChar = KEYS[count];
       count++;
-      const numberStr = count.toString();
-      this._windowsMap.set(numberStr, metaWin);
+
+      // Salva a chave em minúsculo para capturar a tecla direta (sem Shift)
+      this._windowsMap.set(keyChar.toLowerCase(), metaWin);
 
       const [x, y] = preview.get_transformed_position();
 
       const label = new St.Label({
-        text: numberStr,
+        text: keyChar, // Exibe em caixa alta no badge visual
         style_class: "window-number-badge",
         style: `
           background-color: #3584e4;
@@ -121,14 +153,14 @@ export default class WindowNumberingExtension extends Extension {
     this._keyPressId = global.stage.connect("key-press-event", (_, event) => {
       if (!Main.overview.visible) return Clutter.EVENT_PROPAGATE;
 
-      // Se o usuário está digitando algo na busca, ignora a ativação por número
+      // Se houver pesquisa digitada, não interfere no campo de texto
       const searchText = Main.overview.searchEntry.get_text().trim();
       if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
 
       const symbol = event.get_key_symbol();
-      const keyName = Clutter.keyval_name(symbol);
+      const keyName = Clutter.keyval_name(symbol).toLowerCase(); // Força minúsculo (sem Shift)
 
-      if (/^[1-9]$/.test(keyName)) {
+      if (this._windowsMap.has(keyName)) {
         const win = this._windowsMap.get(keyName);
         if (win) {
           Main.overview.hide();
