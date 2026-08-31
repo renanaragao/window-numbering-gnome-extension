@@ -2,11 +2,12 @@ import { Extension } from "resource:///org/gnome/shell/extensions/extension.js";
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import St from "gi://St";
 import Clutter from "gi://Clutter";
+import Gio from "gi://Gio";
+import GLib from "gi://GLib";
 
-const VERSION = "v1.7.0 - Full Alphabet No-Shift";
+const VERSION = "v2.0.0 - JSON Mappings & Shift Activation";
 
-// Alfabeto completo (de A a Z)
-const KEYS = [
+const ALL_KEYS = [
   "A",
   "B",
   "C",
@@ -66,6 +67,29 @@ export default class WindowNumberingExtension extends Extension {
     this._removeKeyHandler();
   }
 
+  // Carrega e faz o parse do config.json em tempo de execução
+  _loadConfig() {
+    try {
+      const configPath = GLib.build_filenamev([this.path, "config.json"]);
+      const file = Gio.File.new_for_path(configPath);
+
+      if (!file.query_exists(null)) {
+        return { reserved_rules: [] };
+      }
+
+      const [success, contents] = file.load_contents(null);
+      if (success) {
+        const jsonString = new TextDecoder().decode(contents);
+        return JSON.parse(jsonString);
+      }
+    } catch (e) {
+      console.log(
+        `[Window-Numbering] Erro ao carregar config.json: ${e.message}`,
+      );
+    }
+    return { reserved_rules: [] };
+  }
+
   _onSearchChanged() {
     const searchText = Main.overview.searchEntry.get_text().trim();
     const isSearching = searchText.length > 0;
@@ -79,33 +103,69 @@ export default class WindowNumberingExtension extends Extension {
     this._clearLabels();
     this._windowsMap.clear();
 
+    const config = this._loadConfig();
+    const rules = config.reserved_rules || [];
+
     const activeWorkspace = global.workspace_manager.get_active_workspace();
     const validWindows = activeWorkspace
       .list_windows()
       .filter((w) => w.showing_on_its_workspace() && !w.is_skip_taskbar());
 
     const allPreviews = this._findPreviews(Main.layoutManager.overviewGroup);
-    let count = 0;
 
+    // Conjunto de chaves reservadas usadas na sessão
+    const reservedKeysInUse = new Set();
+    const assignedMap = new Map(); // preview -> keyChar
+
+    // PASSO 1: Associa regras do config.json às janelas correspondentes
     allPreviews.forEach((preview) => {
-      if (count >= KEYS.length) return;
-
       const metaWin = preview.metaWindow || preview._metaWindow;
       if (!metaWin || !validWindows.includes(metaWin)) return;
 
+      const title = (metaWin.get_title() || "").toLowerCase();
+      const wmClass = (metaWin.get_wm_class() || "").toLowerCase();
+
+      for (const rule of rules) {
+        const matchTerm = (rule.match || "").toLowerCase();
+        const targetKey = (rule.key || "").toUpperCase();
+
+        if (
+          matchTerm &&
+          (title.includes(matchTerm) || wmClass.includes(matchTerm))
+        ) {
+          assignedMap.set(preview, targetKey);
+          reservedKeysInUse.add(targetKey);
+          break;
+        }
+      }
+    });
+
+    // PASSO 2: Define o pool de chaves livres (exclui as reservadas)
+    const availableKeys = ALL_KEYS.filter((k) => !reservedKeysInUse.has(k));
+    let freeKeyIndex = 0;
+
+    // PASSO 3: Atribui as chaves restantes sequencialmente e desenha as badges
+    allPreviews.forEach((preview) => {
+      const metaWin = preview.metaWindow || preview._metaWindow;
+      if (!metaWin || !validWindows.includes(metaWin)) return;
       if (typeof preview.get_mapped === "function" && !preview.get_mapped())
         return;
 
-      const keyChar = KEYS[count];
-      count++;
+      let keyChar = assignedMap.get(preview);
 
-      // Salva a chave em minúsculo para capturar a tecla direta (sem Shift)
-      this._windowsMap.set(keyChar.toLowerCase(), metaWin);
+      if (!keyChar) {
+        if (freeKeyIndex >= availableKeys.length) return;
+        keyChar = availableKeys[freeKeyIndex];
+        freeKeyIndex++;
+      }
+
+      // Registra no mapa global (salva em maiúsculo para combinar com o Shift)
+      this._windowsMap.set(keyChar.toUpperCase(), metaWin);
 
       const [x, y] = preview.get_transformed_position();
 
       const label = new St.Label({
-        text: keyChar, // Exibe em caixa alta no badge visual
+        text: keyChar,
         style_class: "window-number-badge",
         style: `
           background-color: #3584e4;
@@ -153,12 +213,19 @@ export default class WindowNumberingExtension extends Extension {
     this._keyPressId = global.stage.connect("key-press-event", (_, event) => {
       if (!Main.overview.visible) return Clutter.EVENT_PROPAGATE;
 
-      // Se houver pesquisa digitada, não interfere no campo de texto
+      // Se houver texto na busca, ignora os atalhos
       const searchText = Main.overview.searchEntry.get_text().trim();
       if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
 
+      // 1. Exige obrigatoriamente o pressionamento do Shift
+      const state = event.get_state();
+      const hasShift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
+
+      if (!hasShift) return Clutter.EVENT_PROPAGATE;
+
+      // 2. Lê o caractere da tecla
       const symbol = event.get_key_symbol();
-      const keyName = Clutter.keyval_name(symbol).toLowerCase(); // Força minúsculo (sem Shift)
+      const keyName = Clutter.keyval_name(symbol).toUpperCase();
 
       if (this._windowsMap.has(keyName)) {
         const win = this._windowsMap.get(keyName);

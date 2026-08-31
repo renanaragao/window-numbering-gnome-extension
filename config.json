@@ -1,0 +1,20 @@
+{
+  "reserved_rules": [
+    {
+      "match": "whatsapp",
+      "key": "W"
+    },
+    {
+      "match": "teams",
+      "key": "T"
+    },
+    {
+      "match": "outlook",
+      "key": "O"
+    },
+    {
+      "match": "thunderbird",
+      "key": "B"
+    }
+  ]
+}
