@@ -8,9 +8,8 @@ instantaneamente usando combinações de teclado com `Shift`.
 
 1. **Visão Geral (Overview):** Ao abrir a Visão Geral (pressionando a tecla
    `Super` / `Windows`), etiquetas visuais em tom azul aparecem no canto
-   superior esquerdo das miniaturas de janela renderizadas pela Overview,
-   incluindo janelas de outros workspaces quando visíveis na interface (mesmo
-   que só um pedaço da miniatura esteja aparecendo).
+   superior esquerdo das miniaturas de janela do **workspace ativo** na
+   Overview.
 2. **Atalho via Shift:** Pressione **`Shift + [LETRA]`** para focar a janela
    associada, mesmo quando ela estiver em outro workspace (o GNOME alterna de
    workspace ao ativar a janela).

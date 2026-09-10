@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.1.2 - Paint-Visible Overview Labels & Global Reserved Shortcuts";
+  "v2.2.0 - Active Workspace Labels & Global Reserved Shortcuts";
 
 const ALL_KEYS = [
   "A",
@@ -48,6 +48,12 @@ export default class WindowNumberingExtension extends Extension {
 
     this._shownId = Main.overview.connect("shown", () => this._drawLabels());
     this._hidingId = Main.overview.connect("hiding", () => this._clearLabels());
+    this._workspaceSwitchedId = global.workspace_manager.connect(
+      "active-workspace-changed",
+      () => {
+        if (Main.overview.visible) this._drawLabels();
+      },
+    );
 
     const searchEntry = Main.overview.searchEntry;
     if (searchEntry) {
@@ -64,6 +70,8 @@ export default class WindowNumberingExtension extends Extension {
     console.log(`[Window-Numbering] Desativando ${VERSION}`);
     if (this._shownId) Main.overview.disconnect(this._shownId);
     if (this._hidingId) Main.overview.disconnect(this._hidingId);
+    if (this._workspaceSwitchedId)
+      global.workspace_manager.disconnect(this._workspaceSwitchedId);
 
     const searchEntry = Main.overview.searchEntry;
     if (this._searchId && searchEntry) {
@@ -113,7 +121,7 @@ export default class WindowNumberingExtension extends Extension {
     const config = this._loadConfig();
     const rules = config.reserved_rules || [];
 
-    const eligibleWindows = this._collectEligibleWindows();
+    const eligibleWindows = this._collectVisibleWindowsForOverview();
     const {
       reservedWindowToKey,
       reservedKeysInUse,
@@ -209,6 +217,19 @@ export default class WindowNumberingExtension extends Extension {
 
     this._reservedWindowsMap = reservedKeyToWindow;
     this._reservedKeysInUse = reservedKeysInUse;
+  }
+
+  _collectVisibleWindowsForOverview() {
+    const activeWorkspace = global.workspace_manager.get_active_workspace();
+    if (!activeWorkspace) return new Set();
+
+    const windows = new Set();
+    activeWorkspace.list_windows().forEach((win) => {
+      if (!win || win.is_skip_taskbar()) return;
+      windows.add(win);
+    });
+
+    return windows;
   }
 
   _collectEligibleWindows() {
