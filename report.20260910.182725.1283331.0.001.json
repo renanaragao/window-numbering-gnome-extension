@@ -1,0 +1,1004 @@
+
+{
+  "header": {
+    "reportVersion": 5,
+    "event": "Allocation failed - JavaScript heap out of memory",
+    "trigger": "OOMError",
+    "filename": "report.20260910.182725.1283331.0.001.json",
+    "dumpEventTime": "2026-09-10T18:27:25Z",
+    "dumpEventTimeStamp": "1789075645310",
+    "processId": 1283331,
+    "threadId": 0,
+    "cwd": "/home/reraragao/repos/window-numbering-gnome-extension",
+    "commandLine": [
+      "/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot",
+      "--no-warnings",
+      "--report-on-fatalerror",
+      "--optimize-for-size",
+      "--expose-gc",
+      "/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot"
+    ],
+    "nodejsVersion": "v24.20.0",
+    "glibcVersionRuntime": "2.39",
+    "glibcVersionCompiler": "2.28",
+    "wordSize": 64,
+    "arch": "x64",
+    "platform": "linux",
+    "componentVersions": {
+      "acorn": "8.18.0",
+      "ada": "4.0.0",
+      "amaro": "1.1.11",
+      "ares": "1.34.8",
+      "brotli": "1.2.0",
+      "cldr": "48.0",
+      "icu": "78.3",
+      "llhttp": "9.4.3",
+      "merve": "1.2.2",
+      "modules": "137",
+      "napi": "10",
+      "nbytes": "0.1.4",
+      "ncrypto": "0.0.1",
+      "nghttp2": "1.70.0",
+      "nghttp3": "",
+      "ngtcp2": "",
+      "node": "24.20.0",
+      "openssl": "3.5.7",
+      "simdjson": "4.6.6",
+      "simdutf": "6.4.0",
+      "sqlite": "3.53.4",
+      "tz": "2026c",
+      "undici": "7.29.0",
+      "unicode": "17.0",
+      "uv": "1.52.1",
+      "uvwasi": "0.0.23",
+      "v8": "13.6.233.17-node.53",
+      "zlib": "1.3.2.1-motley-42c2f19",
+      "zstd": "1.5.7"
+    },
+    "release": {
+      "name": "node",
+      "lts": "Krypton",
+      "headersUrl": "https://nodejs.org/download/release/v24.20.0/node-v24.20.0-headers.tar.gz",
+      "sourceUrl": "https://nodejs.org/download/release/v24.20.0/node-v24.20.0.tar.gz"
+    },
+    "osName": "Linux",
+    "osRelease": "7.0.0-31-generic",
+    "osVersion": "#31~24.04.1-Ubuntu SMP PREEMPT_DYNAMIC Mon Aug 10 09:38:02 UTC 2",
+    "osMachine": "x86_64",
+    "cpus": [
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 2937,
+        "user": 8985730,
+        "nice": 11600,
+        "sys": 2434500,
+        "idle": 314602200,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 3685,
+        "user": 9452790,
+        "nice": 13660,
+        "sys": 2366580,
+        "idle": 315609570,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 800,
+        "user": 9432160,
+        "nice": 15220,
+        "sys": 2239080,
+        "idle": 316380860,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 2298,
+        "user": 9444980,
+        "nice": 13570,
+        "sys": 2159440,
+        "idle": 316889970,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 3310,
+        "user": 9501390,
+        "nice": 12770,
+        "sys": 2112170,
+        "idle": 317028850,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 3685,
+        "user": 9602470,
+        "nice": 15860,
+        "sys": 2043180,
+        "idle": 317168780,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 4040,
+        "user": 9586040,
+        "nice": 11590,
+        "sys": 2025000,
+        "idle": 317238240,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 3355,
+        "user": 10327100,
+        "nice": 13280,
+        "sys": 1961510,
+        "idle": 316841170,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 800,
+        "user": 9273020,
+        "nice": 9560,
+        "sys": 2026280,
+        "idle": 317584200,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 1854,
+        "user": 9206750,
+        "nice": 10190,
+        "sys": 2063740,
+        "idle": 317185220,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 3491,
+        "user": 9030120,
+        "nice": 7520,
+        "sys": 2037760,
+        "idle": 317331070,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 4000,
+        "user": 9191540,
+        "nice": 10920,
+        "sys": 2029170,
+        "idle": 317146250,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 2550,
+        "user": 9250720,
+        "nice": 11720,
+        "sys": 2010950,
+        "idle": 317021800,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 1492,
+        "user": 8973120,
+        "nice": 12090,
+        "sys": 1976600,
+        "idle": 315302500,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 3997,
+        "user": 9096460,
+        "nice": 16480,
+        "sys": 2146810,
+        "idle": 316639680,
+        "irq": 0
+      },
+      {
+        "model": "11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz",
+        "speed": 1442,
+        "user": 7403810,
+        "nice": 6450,
+        "sys": 2245330,
+        "idle": 317314140,
+        "irq": 0
+      }
+    ],
+    "networkInterfaces": [
+      {
+        "name": "lo",
+        "internal": true,
+        "mac": "00:00:00:00:00:00",
+        "address": "127.0.0.1",
+        "netmask": "255.0.0.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "enp3s0",
+        "internal": false,
+        "mac": "b0:25:aa:46:9d:c4",
+        "address": "192.168.15.6",
+        "netmask": "255.255.255.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "br-41a0981b069f",
+        "internal": false,
+        "mac": "12:3e:8a:42:e1:cf",
+        "address": "172.19.0.1",
+        "netmask": "255.255.0.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "docker0",
+        "internal": false,
+        "mac": "76:fa:00:1c:f4:79",
+        "address": "172.17.0.1",
+        "netmask": "255.255.0.0",
+        "family": "IPv4"
+      },
+      {
+        "name": "lo",
+        "internal": true,
+        "mac": "00:00:00:00:00:00",
+        "address": "::1",
+        "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff",
+        "family": "IPv6",
+        "scopeid": 0
+      },
+      {
+        "name": "enp3s0",
+        "internal": false,
+        "mac": "b0:25:aa:46:9d:c4",
+        "address": "2804:7f0:bcc0:a744:be72:ecb3:23b7:dc09",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 0
+      },
+      {
+        "name": "enp3s0",
+        "internal": false,
+        "mac": "b0:25:aa:46:9d:c4",
+        "address": "2804:7f0:bcc0:a744:fea8:a81e:a7cd:6527",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 0
+      },
+      {
+        "name": "enp3s0",
+        "internal": false,
+        "mac": "b0:25:aa:46:9d:c4",
+        "address": "fe80::e2e5:ff4b:4064:173a",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 2
+      },
+      {
+        "name": "br-41a0981b069f",
+        "internal": false,
+        "mac": "12:3e:8a:42:e1:cf",
+        "address": "fe80::103e:8aff:fe42:e1cf",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 6
+      },
+      {
+        "name": "docker0",
+        "internal": false,
+        "mac": "76:fa:00:1c:f4:79",
+        "address": "fe80::74fa:ff:fe1c:f479",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 7
+      },
+      {
+        "name": "vethc52918c",
+        "internal": false,
+        "mac": "f2:da:bf:61:ac:20",
+        "address": "fe80::f0da:bfff:fe61:ac20",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 20
+      },
+      {
+        "name": "veth8116a9a",
+        "internal": false,
+        "mac": "7e:53:8b:d3:6e:f8",
+        "address": "fe80::7c53:8bff:fed3:6ef8",
+        "netmask": "ffff:ffff:ffff:ffff::",
+        "family": "IPv6",
+        "scopeid": 21
+      }
+    ],
+    "host": "refaragao"
+  },
+  "javascriptStack": {
+    "message": "No stack.",
+    "stack": [
+      "Unavailable."
+    ],
+    "errorProperties": {
+    }
+  },
+  "javascriptHeap": {
+    "totalMemory": 4296503296,
+    "executableMemory": 8925184,
+    "totalCommittedMemory": 4296417280,
+    "availableMemory": 3911440,
+    "totalGlobalHandlesMemory": 131072,
+    "usedGlobalHandlesMemory": 90304,
+    "usedMemory": 4288777768,
+    "memoryLimit": 4298113024,
+    "mallocedMemory": 1073224,
+    "externalMemory": 41446608,
+    "peakMallocedMemory": 60458680,
+    "nativeContextCount": 1,
+    "detachedContextCount": 0,
+    "doesZapGarbage": 0,
+    "heapSpaces": {
+      "read_only_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 0,
+        "used": 0,
+        "available": 0
+      },
+      "new_space": {
+        "memorySize": 2097152,
+        "committedMemory": 2097152,
+        "capacity": 1048512,
+        "used": 0,
+        "available": 1048512
+      },
+      "old_space": {
+        "memorySize": 4274946048,
+        "committedMemory": 4274946048,
+        "capacity": 4270814656,
+        "used": 4270610032,
+        "available": 204624
+      },
+      "code_space": {
+        "memorySize": 7602176,
+        "committedMemory": 7516160,
+        "capacity": 7101568,
+        "used": 7101568,
+        "available": 0
+      },
+      "shared_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 0,
+        "used": 0,
+        "available": 0
+      },
+      "trusted_space": {
+        "memorySize": 6680576,
+        "committedMemory": 6680576,
+        "capacity": 5910072,
+        "used": 5910072,
+        "available": 0
+      },
+      "shared_trusted_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 0,
+        "used": 0,
+        "available": 0
+      },
+      "new_large_object_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 1048576,
+        "used": 0,
+        "available": 1048576
+      },
+      "large_object_space": {
+        "memorySize": 3452928,
+        "committedMemory": 3452928,
+        "capacity": 3438128,
+        "used": 3438128,
+        "available": 0
+      },
+      "code_large_object_space": {
+        "memorySize": 1323008,
+        "committedMemory": 1323008,
+        "capacity": 1319744,
+        "used": 1319744,
+        "available": 0
+      },
+      "shared_large_object_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 0,
+        "used": 0,
+        "available": 0
+      },
+      "shared_trusted_large_object_space": {
+        "memorySize": 0,
+        "committedMemory": 0,
+        "capacity": 0,
+        "used": 0,
+        "available": 0
+      },
+      "trusted_large_object_space": {
+        "memorySize": 401408,
+        "committedMemory": 401408,
+        "capacity": 398224,
+        "used": 398224,
+        "available": 0
+      }
+    }
+  },
+  "nativeStack": [
+    {
+      "pc": "0x00000000009fd934",
+      "symbol": "node::TriggerNodeReport(v8::Isolate*, node::Environment*, char const*, char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, v8::Local<v8::Value>) [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x00000000009fded7",
+      "symbol": "node::TriggerNodeReport(v8::Isolate*, char const*, char const*, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, v8::Local<v8::Value>) [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x000000000075760c",
+      "symbol": "node::OOMErrorHandler(char const*, v8::OOMDetails const&) [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000c60e30",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000c60f1f",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000f047f5",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000f04822",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000f04b1a",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000f1581a",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x0000000000f19bc0",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    },
+    {
+      "pc": "0x00000000019b78a1",
+      "symbol": " [/home/reraragao/.nvm/versions/node/v24.14.0/lib/node_modules/@github/copilot/node_modules/@github/copilot-linux-x64/copilot]"
+    }
+  ],
+  "resourceUsage": {
+    "free_memory": 14891012096,
+    "total_memory": 33380675584,
+    "rss": 4919332864,
+    "constrained_memory": 18446744073709551615,
+    "available_memory": 14891012096,
+    "userCpuSeconds": 4497.64,
+    "kernelCpuSeconds": 1765.89,
+    "cpuConsumptionPercent": 261.744,
+    "userCpuConsumptionPercent": 187.95,
+    "kernelCpuConsumptionPercent": 73.7938,
+    "maxRss": 4919332864,
+    "pageFaults": {
+      "IORequired": 4,
+      "IONotRequired": 3951383
+    },
+    "fsActivity": {
+      "reads": 1256,
+      "writes": 6328
+    }
+  },
+  "uvthreadResourceUsage": {
+    "userCpuSeconds": 1965.01,
+    "kernelCpuSeconds": 207.443,
+    "cpuConsumptionPercent": 90.7837,
+    "userCpuConsumptionPercent": 82.1149,
+    "kernelCpuConsumptionPercent": 8.66874,
+    "fsActivity": {
+      "reads": 96,
+      "writes": 24
+    }
+  },
+  "libuv": [
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002206e4c0"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000006b64b60"
+    },
+    {
+      "type": "timer",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000220f2a88",
+      "repeat": 0,
+      "firesInMsFromNow": 97,
+      "expired": false
+    },
+    {
+      "type": "check",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000220f2b20"
+    },
+    {
+      "type": "idle",
+      "is_active": false,
+      "is_referenced": true,
+      "address": "0x00000000220f2b98"
+    },
+    {
+      "type": "prepare",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000220f2c10"
+    },
+    {
+      "type": "check",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000220f2c88"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000220f2d00"
+    },
+    {
+      "type": "tty",
+      "is_active": false,
+      "is_referenced": true,
+      "address": "0x000000002214d2f0",
+      "width": 189,
+      "height": 51,
+      "fd": 20,
+      "writeQueueSize": 0,
+      "readable": true,
+      "writable": true
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022187718",
+      "signum": 28,
+      "signal": "SIGWINCH"
+    },
+    {
+      "type": "tty",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000222eef20",
+      "width": 189,
+      "height": 51,
+      "fd": 22,
+      "writeQueueSize": 0,
+      "readable": true,
+      "writable": true
+    },
+    {
+      "type": "tty",
+      "is_active": false,
+      "is_referenced": true,
+      "address": "0x00000000222e7910",
+      "width": 189,
+      "height": 51,
+      "fd": 23,
+      "writeQueueSize": 0,
+      "readable": true,
+      "writable": true
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022122698"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000225885d8"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022591618",
+      "signum": 15,
+      "signal": "SIGTERM"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002248e488",
+      "signum": 2,
+      "signal": "SIGINT"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022591728",
+      "signum": 1,
+      "signal": "SIGHUP"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022570ca8",
+      "signum": 3,
+      "signal": "SIGQUIT"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022843e98"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000221584b8",
+      "signum": 18,
+      "signal": "SIGCONT"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000225b4838",
+      "signum": 14,
+      "signal": "SIGALRM"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022500c88",
+      "signum": 6,
+      "signal": "SIGABRT"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022559738",
+      "signum": 26,
+      "signal": "SIGVTALRM"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022497c08",
+      "signum": 24,
+      "signal": "SIGXCPU"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000224fd228",
+      "signum": 25,
+      "signal": "SIGXFSZ"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022581928",
+      "signum": 12,
+      "signal": "SIGUSR2"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000224ff438",
+      "signum": 5,
+      "signal": "SIGTRAP"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002286aae8",
+      "signum": 31,
+      "signal": "SIGSYS"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x00000000227fa5f8",
+      "signum": 6,
+      "signal": "SIGABRT"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000022582fc8",
+      "signum": 29,
+      "signal": "SIGIO"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002286a1c8",
+      "signum": 29,
+      "signal": "SIGIO"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002286a2d8",
+      "signum": 30,
+      "signal": "SIGPWR"
+    },
+    {
+      "type": "signal",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002286a428",
+      "signum": 16,
+      "signal": "SIGSTKFLT"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000228a4cd8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x000000002295fa38"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x000000002293e248"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022a312f8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022e28788"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000229ffd48"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000229bcbb8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022e99fa8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022adb938"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x000000002299dfb8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022e66958"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022e57238"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00007e6fc4a1dc18"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000224ff868"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022904668"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022bec6a8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022a1cc18"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022934bb8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000022ae0528"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000273ff1b8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000244802b8"
+    },
+    {
+      "type": "timer",
+      "is_active": true,
+      "is_referenced": false,
+      "address": "0x0000000027b5f520",
+      "repeat": 0,
+      "firesInMsFromNow": 97,
+      "expired": false
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x000000002795e3b8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000023f693b8"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000025afa338"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x0000000026fa4238"
+    },
+    {
+      "type": "async",
+      "is_active": true,
+      "is_referenced": true,
+      "address": "0x00000000269e3138"
+    },
+    {
+      "type": "loop",
+      "is_active": true,
+      "address": "0x0000000006b77aa0",
+      "loopIdleTimeSeconds": 217.793
+    }
+  ],
+  "workers": [
+  ],
+  "userLimits": {
+    "core_file_size_blocks": {
+      "soft": 0,
+      "hard": "unlimited"
+    },
+    "data_seg_size_bytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "file_size_blocks": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "max_locked_memory_bytes": {
+      "soft": 4172582912,
+      "hard": 4172582912
+    },
+    "max_memory_size_bytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "open_files": {
+      "soft": 1048576,
+      "hard": 1048576
+    },
+    "stack_size_bytes": {
+      "soft": 8388608,
+      "hard": "unlimited"
+    },
+    "cpu_time_seconds": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    },
+    "max_user_processes": {
+      "soft": 115554,
+      "hard": 115554
+    },
+    "virtual_memory_bytes": {
+      "soft": "unlimited",
+      "hard": "unlimited"
+    }
+  },
+  "sharedObjects": [
+    "linux-vdso.so.1",
+    "/lib/x86_64-linux-gnu/libdl.so.2",
+    "/lib/x86_64-linux-gnu/libstdc++.so.6",
+    "/lib/x86_64-linux-gnu/libm.so.6",
+    "/lib/x86_64-linux-gnu/libgcc_s.so.1",
+    "/lib/x86_64-linux-gnu/libpthread.so.0",
+    "/lib/x86_64-linux-gnu/libc.so.6",
+    "/lib64/ld-linux-x86-64.so.2",
+    "/home/reraragao/.cache/copilot/pkg/linux-x64/1.0.83/prebuilds/linux-x64/runtime.node",
+    "/lib/x86_64-linux-gnu/libnss_mdns4_minimal.so.2",
+    "/home/reraragao/.cache/copilot/pkg/linux-x64/1.0.83/prebuilds/linux-x64/cli-native.node"
+  ]
+}
