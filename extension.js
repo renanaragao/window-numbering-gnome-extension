@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.1.1 - Visible Overview Labels & Global Reserved Shortcuts";
+  "v2.1.2 - Paint-Visible Overview Labels & Global Reserved Shortcuts";
 
 const ALL_KEYS = [
   "A",
@@ -177,6 +177,11 @@ export default class WindowNumberingExtension extends Extension {
   _isPreviewVisuallyPresent(preview) {
     if (!preview) return false;
 
+    if (
+      typeof preview.get_paint_visibility === "function" &&
+      !preview.get_paint_visibility()
+    )
+      return false;
     if (typeof preview.get_mapped === "function" && !preview.get_mapped())
       return false;
     if (typeof preview.is_visible === "function" && !preview.is_visible())
