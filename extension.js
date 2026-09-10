@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.3.6 - Global Key Recovery and Search Label Restore";
+  "v2.3.7 - Shift Keybinding Recovery Across Workspaces";
 const WORKSPACE_REDRAW_DELAY_MS = 300;
 
 const ALL_KEYS = [
@@ -322,14 +322,19 @@ export default class WindowNumberingExtension extends Extension {
   }
 
   _collectEligibleWindows() {
+    const workspaceManager = global.workspace_manager;
     const windows = new Set();
-    const mruWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
 
-    mruWindows.forEach((win) => {
-      if (!win || win.is_skip_taskbar()) return;
-      if (!this._isWindowAlive(win)) return;
-      windows.add(win);
-    });
+    for (let i = 0; i < workspaceManager.n_workspaces; i++) {
+      const workspace = workspaceManager.get_workspace_by_index(i);
+      if (!workspace) continue;
+
+      const workspaceWindows = workspace.list_windows();
+      workspaceWindows.forEach((win) => {
+        if (!win || win.is_skip_taskbar()) return;
+        windows.add(win);
+      });
+    }
 
     return windows;
   }
@@ -427,15 +432,15 @@ export default class WindowNumberingExtension extends Extension {
 
       // Se houver texto na busca da overview, ignora os atalhos
       if (isOverviewVisible) {
-        const searchText = Main.overview.searchEntry.get_text().trim();
+        const searchEntry = Main.overview.searchEntry;
+        const searchText = searchEntry ? searchEntry.get_text().trim() : "";
         if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
       }
 
       this._refreshReservedWindowsMap();
 
       // Lê o caractere da tecla
-      const symbol = event.get_key_symbol();
-      const keyName = Clutter.keyval_name(symbol).toUpperCase();
+      const keyName = this._extractLetterKey(event);
       if (!ALL_KEYS.includes(keyName)) return Clutter.EVENT_PROPAGATE;
 
       let win = null;
@@ -478,16 +483,35 @@ export default class WindowNumberingExtension extends Extension {
   }
 
   _cleanupFreeAssignments(reservedKeysInUse = new Set()) {
+    const eligibleWindows = this._collectEligibleWindows();
+
     for (const [key, win] of this._freeKeyToWindow.entries()) {
       if (reservedKeysInUse.has(key)) {
         this._freeKeyToWindow.delete(key);
         this._freeWindowToKey.delete(win);
         continue;
       }
-      if (this._isWindowAlive(win)) continue;
+      if (eligibleWindows.has(win)) continue;
       this._freeKeyToWindow.delete(key);
       this._freeWindowToKey.delete(win);
     }
+  }
+
+  _extractLetterKey(event) {
+    if (!event) return "";
+
+    if (typeof event.get_key_unicode === "function") {
+      const unicode = event.get_key_unicode();
+      if (unicode && unicode > 0) {
+        const char = String.fromCodePoint(unicode).toUpperCase();
+        if (ALL_KEYS.includes(char)) return char;
+      }
+    }
+
+    const symbol = event.get_key_symbol();
+    const keyName = Clutter.keyval_name(symbol);
+    if (!keyName) return "";
+    return keyName.toUpperCase();
   }
 
   _removeWindowAssignments(win) {
