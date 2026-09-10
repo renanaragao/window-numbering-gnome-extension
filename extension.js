@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.3.8 - Robust Shift Keybinding Capture";
+  "v2.4.0 - Definitive Shift+Key via captured-event";
 const WORKSPACE_REDRAW_DELAY_MS = 300;
 
 const ALL_KEYS = [
@@ -52,7 +52,6 @@ export default class WindowNumberingExtension extends Extension {
     this._workspaceRedrawAttempts = 0;
     this._searchEntry = null;
     this._searchId = 0;
-    this._capturedEventId = 0;
     this._keyPressId = 0;
 
     this._shownId = Main.overview.connect("shown", () => {
@@ -424,22 +423,15 @@ export default class WindowNumberingExtension extends Extension {
 
   _setupKeyHandler() {
     this._removeKeyHandler();
-    this._capturedEventId = global.stage.connect("captured-event", (_, event) => {
-      if (!event || event.type() !== Clutter.EventType.KEY_PRESS)
-        return Clutter.EVENT_PROPAGATE;
-      return this._handleLetterActivation(event);
-    });
-
-    this._keyPressId = global.stage.connect("key-press-event", (_, event) => {
+    // captured-event fires top-down (capture phase) BEFORE any actor,
+    // including the overview search entry — so Shift+Letter is intercepted
+    // before search can steal the event.
+    this._keyPressId = global.stage.connect("captured-event", (_, event) => {
       return this._handleLetterActivation(event);
     });
   }
 
   _removeKeyHandler() {
-    if (this._capturedEventId) {
-      global.stage.disconnect(this._capturedEventId);
-      this._capturedEventId = 0;
-    }
     if (this._keyPressId) {
       global.stage.disconnect(this._keyPressId);
       this._keyPressId = 0;
@@ -449,14 +441,23 @@ export default class WindowNumberingExtension extends Extension {
   _handleLetterActivation(event) {
     if (!event) return Clutter.EVENT_PROPAGATE;
 
-    const keyName = this._extractLetterKey(event);
+    // Only act on key press events; let everything else through.
+    const symbol = event.get_key_symbol ? event.get_key_symbol() : 0;
+    if (!symbol) return Clutter.EVENT_PROPAGATE;
+
+    const keyName = Clutter.keyval_name(symbol);
+    // keyval_name for Shift+w returns "W" (uppercase), for plain w returns "w".
+    // We only care about single uppercase letters A-Z.
+    if (!keyName || keyName.length !== 1) return Clutter.EVENT_PROPAGATE;
     if (!ALL_KEYS.includes(keyName)) return Clutter.EVENT_PROPAGATE;
 
+    // Require Shift to be held (belt-and-suspenders with the uppercase check).
     const state = event.get_state ? event.get_state() : 0;
     const hasShift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
     if (!hasShift) return Clutter.EVENT_PROPAGATE;
 
     const isOverviewVisible = Main.overview.visible;
+    // If the user is typing in the search box, let the characters through.
     if (isOverviewVisible) {
       const searchEntry = Main.overview.searchEntry;
       const searchText = searchEntry ? searchEntry.get_text().trim() : "";
@@ -507,18 +508,10 @@ export default class WindowNumberingExtension extends Extension {
 
   _extractLetterKey(event) {
     if (!event) return "";
-
-    if (typeof event.get_key_unicode === "function") {
-      const unicode = event.get_key_unicode();
-      if (unicode && unicode > 0) {
-        const char = String.fromCodePoint(unicode).toUpperCase();
-        if (ALL_KEYS.includes(char)) return char;
-      }
-    }
-
-    const symbol = event.get_key_symbol();
+    const symbol = event.get_key_symbol ? event.get_key_symbol() : 0;
+    if (!symbol) return "";
     const keyName = Clutter.keyval_name(symbol);
-    if (!keyName) return "";
+    if (!keyName || keyName.length !== 1) return "";
     return keyName.toUpperCase();
   }
 
