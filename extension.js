@@ -2,10 +2,12 @@ import { Extension } from "resource:///org/gnome/shell/extensions/extension.js";
 import * as Main from "resource:///org/gnome/shell/ui/main.js";
 import St from "gi://St";
 import Clutter from "gi://Clutter";
+import Meta from "gi://Meta";
 import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
-const VERSION = "v2.0.0 - JSON Mappings & Shift Activation";
+const VERSION =
+  "v2.1.0 - Global Reserved Shortcuts & Cross-Workspace Activation";
 
 const ALL_KEYS = [
   "A",
@@ -41,6 +43,8 @@ export default class WindowNumberingExtension extends Extension {
     console.log(`[Window-Numbering] Ativando ${VERSION}`);
     this._labels = [];
     this._windowsMap = new Map();
+    this._reservedWindowsMap = new Map();
+    this._reservedKeysInUse = new Set();
 
     this._shownId = Main.overview.connect("shown", () => this._drawLabels());
     this._hidingId = Main.overview.connect("hiding", () => this._clearLabels());
@@ -51,6 +55,9 @@ export default class WindowNumberingExtension extends Extension {
         this._onSearchChanged();
       });
     }
+
+    this._refreshReservedWindowsMap();
+    this._setupKeyHandler();
   }
 
   disable() {
@@ -106,39 +113,20 @@ export default class WindowNumberingExtension extends Extension {
     const config = this._loadConfig();
     const rules = config.reserved_rules || [];
 
-    const activeWorkspace = global.workspace_manager.get_active_workspace();
-    const validWindows = activeWorkspace
-      .list_windows()
-      .filter((w) => w.showing_on_its_workspace() && !w.is_skip_taskbar());
+    const eligibleWindows = this._collectEligibleWindows();
+    const {
+      reservedWindowToKey,
+      reservedKeysInUse,
+      reservedKeyToWindow,
+    } = this._buildReservedWindowAssignments(rules, eligibleWindows);
+
+    this._reservedKeysInUse = reservedKeysInUse;
+    this._reservedWindowsMap = reservedKeyToWindow;
+    reservedKeyToWindow.forEach((win, key) => {
+      this._windowsMap.set(key, win);
+    });
 
     const allPreviews = this._findPreviews(Main.layoutManager.overviewGroup);
-
-    // Conjunto de chaves reservadas usadas na sessão
-    const reservedKeysInUse = new Set();
-    const assignedMap = new Map(); // preview -> keyChar
-
-    // PASSO 1: Associa regras do config.json às janelas correspondentes
-    allPreviews.forEach((preview) => {
-      const metaWin = preview.metaWindow || preview._metaWindow;
-      if (!metaWin || !validWindows.includes(metaWin)) return;
-
-      const title = (metaWin.get_title() || "").toLowerCase();
-      const wmClass = (metaWin.get_wm_class() || "").toLowerCase();
-
-      for (const rule of rules) {
-        const matchTerm = (rule.match || "").toLowerCase();
-        const targetKey = (rule.key || "").toUpperCase();
-
-        if (
-          matchTerm &&
-          (title.includes(matchTerm) || wmClass.includes(matchTerm))
-        ) {
-          assignedMap.set(preview, targetKey);
-          reservedKeysInUse.add(targetKey);
-          break;
-        }
-      }
-    });
 
     // PASSO 2: Define o pool de chaves livres (exclui as reservadas)
     const availableKeys = ALL_KEYS.filter((k) => !reservedKeysInUse.has(k));
@@ -147,11 +135,11 @@ export default class WindowNumberingExtension extends Extension {
     // PASSO 3: Atribui as chaves restantes sequencialmente e desenha as badges
     allPreviews.forEach((preview) => {
       const metaWin = preview.metaWindow || preview._metaWindow;
-      if (!metaWin || !validWindows.includes(metaWin)) return;
+      if (!metaWin || !eligibleWindows.has(metaWin)) return;
       if (typeof preview.get_mapped === "function" && !preview.get_mapped())
         return;
 
-      let keyChar = assignedMap.get(preview);
+      let keyChar = reservedWindowToKey.get(metaWin);
 
       if (!keyChar) {
         if (freeKeyIndex >= availableKeys.length) return;
@@ -185,7 +173,100 @@ export default class WindowNumberingExtension extends Extension {
     });
 
     this._onSearchChanged();
-    this._setupKeyHandler();
+  }
+
+  _refreshReservedWindowsMap() {
+    const config = this._loadConfig();
+    const rules = config.reserved_rules || [];
+    const eligibleWindows = this._collectEligibleWindows();
+    const { reservedKeyToWindow, reservedKeysInUse } =
+      this._buildReservedWindowAssignments(rules, eligibleWindows);
+
+    this._reservedWindowsMap = reservedKeyToWindow;
+    this._reservedKeysInUse = reservedKeysInUse;
+  }
+
+  _collectEligibleWindows() {
+    const workspaceManager = global.workspace_manager;
+    const windows = new Set();
+
+    for (let i = 0; i < workspaceManager.n_workspaces; i++) {
+      const workspace = workspaceManager.get_workspace_by_index(i);
+      if (!workspace) continue;
+
+      const workspaceWindows = workspace.list_windows();
+      workspaceWindows.forEach((win) => {
+        if (!win || win.is_skip_taskbar()) return;
+        if (
+          typeof win.showing_on_its_workspace === "function" &&
+          !win.showing_on_its_workspace()
+        )
+          return;
+        windows.add(win);
+      });
+    }
+
+    return windows;
+  }
+
+  _buildReservedWindowAssignments(rules, eligibleWindows) {
+    const windows = Array.from(eligibleWindows);
+    const reservedKeyToWindow = new Map();
+    const reservedWindowToKey = new Map();
+    const reservedKeysInUse = new Set();
+    const mruRanks = this._getMruRanks();
+
+    for (const rule of rules) {
+      const matchTerm = (rule.match || "").toLowerCase().trim();
+      const targetKey = (rule.key || "").toUpperCase().trim();
+
+      if (!matchTerm || !ALL_KEYS.includes(targetKey)) continue;
+      if (reservedKeyToWindow.has(targetKey)) continue;
+
+      const matchingWindows = windows.filter((win) => {
+        const title = (win.get_title() || "").toLowerCase();
+        const wmClass = (win.get_wm_class() || "").toLowerCase();
+        return title.includes(matchTerm) || wmClass.includes(matchTerm);
+      });
+
+      const selectedWindow = this._selectMostRecentWindow(
+        matchingWindows,
+        mruRanks,
+      );
+      if (!selectedWindow) continue;
+
+      reservedKeyToWindow.set(targetKey, selectedWindow);
+      reservedWindowToKey.set(selectedWindow, targetKey);
+      reservedKeysInUse.add(targetKey);
+    }
+
+    return { reservedKeyToWindow, reservedWindowToKey, reservedKeysInUse };
+  }
+
+  _getMruRanks() {
+    const mruWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
+    const ranks = new Map();
+    for (let i = 0; i < mruWindows.length; i++) {
+      ranks.set(mruWindows[i], i);
+    }
+    return ranks;
+  }
+
+  _selectMostRecentWindow(windows, ranks) {
+    if (windows.length === 0) return null;
+
+    let selected = windows[0];
+    let bestRank = Number.POSITIVE_INFINITY;
+
+    windows.forEach((win) => {
+      const rank = ranks.has(win) ? ranks.get(win) : Number.POSITIVE_INFINITY;
+      if (rank < bestRank) {
+        bestRank = rank;
+        selected = win;
+      }
+    });
+
+    return selected;
   }
 
   _findPreviews(node) {
@@ -211,29 +292,37 @@ export default class WindowNumberingExtension extends Extension {
   _setupKeyHandler() {
     this._removeKeyHandler();
     this._keyPressId = global.stage.connect("key-press-event", (_, event) => {
-      if (!Main.overview.visible) return Clutter.EVENT_PROPAGATE;
+      const isOverviewVisible = Main.overview.visible;
 
-      // Se houver texto na busca, ignora os atalhos
-      const searchText = Main.overview.searchEntry.get_text().trim();
-      if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
-
-      // 1. Exige obrigatoriamente o pressionamento do Shift
+      // Exige obrigatoriamente o pressionamento do Shift
       const state = event.get_state();
       const hasShift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
-
       if (!hasShift) return Clutter.EVENT_PROPAGATE;
 
-      // 2. Lê o caractere da tecla
+      // Se houver texto na busca da overview, ignora os atalhos
+      if (isOverviewVisible) {
+        const searchText = Main.overview.searchEntry.get_text().trim();
+        if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
+      }
+
+      this._refreshReservedWindowsMap();
+
+      // Lê o caractere da tecla
       const symbol = event.get_key_symbol();
       const keyName = Clutter.keyval_name(symbol).toUpperCase();
+      if (!ALL_KEYS.includes(keyName)) return Clutter.EVENT_PROPAGATE;
 
-      if (this._windowsMap.has(keyName)) {
-        const win = this._windowsMap.get(keyName);
-        if (win) {
-          Main.overview.hide();
-          win.activate(global.get_current_time());
-          return Clutter.EVENT_STOP;
-        }
+      let win = null;
+      if (isOverviewVisible) {
+        win = this._windowsMap.get(keyName) || this._reservedWindowsMap.get(keyName);
+      } else {
+        win = this._reservedWindowsMap.get(keyName);
+      }
+
+      if (win) {
+        if (isOverviewVisible) Main.overview.hide();
+        win.activate(global.get_current_time());
+        return Clutter.EVENT_STOP;
       }
       return Clutter.EVENT_PROPAGATE;
     });
@@ -247,7 +336,6 @@ export default class WindowNumberingExtension extends Extension {
   }
 
   _clearLabels() {
-    this._removeKeyHandler();
     this._labels.forEach((l) => l.destroy());
     this._labels = [];
   }
