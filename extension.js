@@ -7,7 +7,8 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.3.2 - Workspace Preview Redraw & Global Free Shortcuts";
+  "v2.3.4 - Retry Workspace Preview Redraw After Overview Settling";
+const WORKSPACE_REDRAW_DELAY_MS = 500;
 
 const ALL_KEYS = [
   "A",
@@ -48,6 +49,7 @@ export default class WindowNumberingExtension extends Extension {
     this._freeKeyToWindow = new Map();
     this._freeWindowToKey = new Map();
     this._workspaceRedrawId = 0;
+    this._workspaceRedrawAttempts = 0;
 
     this._shownId = Main.overview.connect("shown", () => this._drawLabels());
     this._hidingId = Main.overview.connect("hiding", () => this._clearLabels());
@@ -211,13 +213,34 @@ export default class WindowNumberingExtension extends Extension {
   }
 
   _scheduleWorkspaceRedraw() {
-    if (this._workspaceRedrawId) return;
-
-    this._workspaceRedrawId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+    if (this._workspaceRedrawId) {
+      GLib.source_remove(this._workspaceRedrawId);
       this._workspaceRedrawId = 0;
-      if (Main.overview.visible) this._drawLabels();
-      return GLib.SOURCE_REMOVE;
-    });
+    }
+
+    this._workspaceRedrawId = GLib.timeout_add(
+      GLib.PRIORITY_DEFAULT,
+      WORKSPACE_REDRAW_DELAY_MS,
+      () => {
+        this._workspaceRedrawId = 0;
+
+        if (!Main.overview.visible) {
+          this._workspaceRedrawAttempts = 0;
+          return GLib.SOURCE_REMOVE;
+        }
+
+        this._drawLabels();
+
+        if (this._workspaceRedrawAttempts < 2) {
+          this._workspaceRedrawAttempts += 1;
+          this._scheduleWorkspaceRedraw();
+          return GLib.SOURCE_REMOVE;
+        }
+
+        this._workspaceRedrawAttempts = 0;
+        return GLib.SOURCE_REMOVE;
+      },
+    );
   }
 
   _isPreviewVisuallyPresent(preview) {
