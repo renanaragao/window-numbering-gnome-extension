@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.3.7 - Shift Keybinding Recovery Across Workspaces";
+  "v2.3.8 - Robust Shift Keybinding Capture";
 const WORKSPACE_REDRAW_DELAY_MS = 300;
 
 const ALL_KEYS = [
@@ -52,6 +52,8 @@ export default class WindowNumberingExtension extends Extension {
     this._workspaceRedrawAttempts = 0;
     this._searchEntry = null;
     this._searchId = 0;
+    this._capturedEventId = 0;
+    this._keyPressId = 0;
 
     this._shownId = Main.overview.connect("shown", () => {
       this._ensureSearchSignal();
@@ -422,52 +424,58 @@ export default class WindowNumberingExtension extends Extension {
 
   _setupKeyHandler() {
     this._removeKeyHandler();
+    this._capturedEventId = global.stage.connect("captured-event", (_, event) => {
+      if (!event || event.type() !== Clutter.EventType.KEY_PRESS)
+        return Clutter.EVENT_PROPAGATE;
+      return this._handleLetterActivation(event);
+    });
+
     this._keyPressId = global.stage.connect("key-press-event", (_, event) => {
-      const isOverviewVisible = Main.overview.visible;
-
-      // Exige obrigatoriamente o pressionamento do Shift
-      const state = event.get_state();
-      const hasShift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
-      if (!hasShift) return Clutter.EVENT_PROPAGATE;
-
-      // Se houver texto na busca da overview, ignora os atalhos
-      if (isOverviewVisible) {
-        const searchEntry = Main.overview.searchEntry;
-        const searchText = searchEntry ? searchEntry.get_text().trim() : "";
-        if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
-      }
-
-      this._refreshReservedWindowsMap();
-
-      // Lê o caractere da tecla
-      const keyName = this._extractLetterKey(event);
-      if (!ALL_KEYS.includes(keyName)) return Clutter.EVENT_PROPAGATE;
-
-      let win = null;
-      if (isOverviewVisible) {
-        win =
-          this._windowsMap.get(keyName) ||
-          this._reservedWindowsMap.get(keyName) ||
-          this._freeKeyToWindow.get(keyName);
-      } else {
-        win = this._reservedWindowsMap.get(keyName) || this._freeKeyToWindow.get(keyName);
-      }
-
-      if (win) {
-        if (isOverviewVisible) Main.overview.hide();
-        win.activate(global.get_current_time());
-        this._clearLabels();
-        return Clutter.EVENT_STOP;
-      }
-      return Clutter.EVENT_PROPAGATE;
+      return this._handleLetterActivation(event);
     });
   }
 
   _removeKeyHandler() {
+    if (this._capturedEventId) {
+      global.stage.disconnect(this._capturedEventId);
+      this._capturedEventId = 0;
+    }
     if (this._keyPressId) {
       global.stage.disconnect(this._keyPressId);
-      this._keyPressId = null;
+      this._keyPressId = 0;
     }
+  }
+
+  _handleLetterActivation(event) {
+    if (!event) return Clutter.EVENT_PROPAGATE;
+
+    const keyName = this._extractLetterKey(event);
+    if (!ALL_KEYS.includes(keyName)) return Clutter.EVENT_PROPAGATE;
+
+    const state = event.get_state ? event.get_state() : 0;
+    const hasShift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
+    if (!hasShift) return Clutter.EVENT_PROPAGATE;
+
+    const isOverviewVisible = Main.overview.visible;
+    if (isOverviewVisible) {
+      const searchEntry = Main.overview.searchEntry;
+      const searchText = searchEntry ? searchEntry.get_text().trim() : "";
+      if (searchText.length > 0) return Clutter.EVENT_PROPAGATE;
+    }
+
+    this._refreshReservedWindowsMap();
+
+    const win =
+      this._windowsMap.get(keyName) ||
+      this._reservedWindowsMap.get(keyName) ||
+      this._freeKeyToWindow.get(keyName);
+
+    if (!win) return Clutter.EVENT_PROPAGATE;
+
+    if (isOverviewVisible) Main.overview.hide();
+    win.activate(global.get_current_time());
+    this._clearLabels();
+    return Clutter.EVENT_STOP;
   }
 
   _clearLabels() {
