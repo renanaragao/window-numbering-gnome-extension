@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.2.0 - Active Workspace Labels & Global Reserved Shortcuts";
+  "v2.2.1 - Reserved Keys Protected & Selection Cleanup";
 
 const ALL_KEYS = [
   "A",
@@ -267,6 +267,7 @@ export default class WindowNumberingExtension extends Extension {
       const targetKey = (rule.key || "").toUpperCase().trim();
 
       if (!matchTerm || !ALL_KEYS.includes(targetKey)) continue;
+      reservedKeysInUse.add(targetKey);
       if (reservedKeyToWindow.has(targetKey)) continue;
 
       const matchingWindows = windows.filter((win) => {
@@ -368,6 +369,7 @@ export default class WindowNumberingExtension extends Extension {
       if (win) {
         if (isOverviewVisible) Main.overview.hide();
         win.activate(global.get_current_time());
+        this._clearLabels();
         return Clutter.EVENT_STOP;
       }
       return Clutter.EVENT_PROPAGATE;
@@ -384,5 +386,6 @@ export default class WindowNumberingExtension extends Extension {
   _clearLabels() {
     this._labels.forEach((l) => l.destroy());
     this._labels = [];
+    this._windowsMap.clear();
   }
 }
