@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.4.0 - Definitive Shift+Key via captured-event";
+  "v2.4.1 - Fix MetaDisplay Signal Error & Safe Event Filtering";
 const WORKSPACE_REDRAW_DELAY_MS = 300;
 
 const ALL_KEYS = [
@@ -68,12 +68,6 @@ export default class WindowNumberingExtension extends Extension {
         }
       },
     );
-    this._windowUnmanagedId = global.display.connect(
-      "window-unmanaged",
-      (_, win) => {
-        this._removeWindowAssignments(win);
-      },
-    );
 
     this._ensureSearchSignal();
     this._refreshReservedWindowsMap();
@@ -86,8 +80,6 @@ export default class WindowNumberingExtension extends Extension {
     if (this._hidingId) Main.overview.disconnect(this._hidingId);
     if (this._workspaceSwitchedId)
       global.workspace_manager.disconnect(this._workspaceSwitchedId);
-    if (this._windowUnmanagedId)
-      global.display.disconnect(this._windowUnmanagedId);
 
     this._disconnectSearchSignal();
 
@@ -441,17 +433,21 @@ export default class WindowNumberingExtension extends Extension {
   _handleLetterActivation(event) {
     if (!event) return Clutter.EVENT_PROPAGATE;
 
-    // Only act on key press events; let everything else through.
+    // VERY IMPORTANT: Only act on key press events to avoid crashes and overhead on motion/scroll events!
+    if (event.type() !== Clutter.EventType.KEY_PRESS)
+      return Clutter.EVENT_PROPAGATE;
+
     const symbol = event.get_key_symbol ? event.get_key_symbol() : 0;
     if (!symbol) return Clutter.EVENT_PROPAGATE;
 
-    const keyName = Clutter.keyval_name(symbol);
-    // keyval_name for Shift+w returns "W" (uppercase), for plain w returns "w".
-    // We only care about single uppercase letters A-Z.
-    if (!keyName || keyName.length !== 1) return Clutter.EVENT_PROPAGATE;
+    let keyName = Clutter.keyval_name(symbol);
+    if (!keyName) return Clutter.EVENT_PROPAGATE;
+
+    keyName = keyName.toUpperCase();
+    if (keyName.length !== 1) return Clutter.EVENT_PROPAGATE;
     if (!ALL_KEYS.includes(keyName)) return Clutter.EVENT_PROPAGATE;
 
-    // Require Shift to be held (belt-and-suspenders with the uppercase check).
+    // Require Shift to be held.
     const state = event.get_state ? event.get_state() : 0;
     const hasShift = (state & Clutter.ModifierType.SHIFT_MASK) !== 0;
     if (!hasShift) return Clutter.EVENT_PROPAGATE;
@@ -511,7 +507,7 @@ export default class WindowNumberingExtension extends Extension {
     const symbol = event.get_key_symbol ? event.get_key_symbol() : 0;
     if (!symbol) return "";
     const keyName = Clutter.keyval_name(symbol);
-    if (!keyName || keyName.length !== 1) return "";
+    if (!keyName) return "";
     return keyName.toUpperCase();
   }
 
@@ -523,11 +519,6 @@ export default class WindowNumberingExtension extends Extension {
       this._freeKeyToWindow.delete(key);
     }
     this._freeWindowToKey.delete(win);
-
-    for (const [key, assignedWin] of this._reservedWindowsMap.entries()) {
-      if (assignedWin !== win) continue;
-      this._reservedWindowsMap.delete(key);
-    }
 
     for (const [key, assignedWin] of this._windowsMap.entries()) {
       if (assignedWin !== win) continue;
