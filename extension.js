@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.1.0 - Global Reserved Shortcuts & Cross-Workspace Activation";
+  "v2.1.1 - Visible Overview Labels & Global Reserved Shortcuts";
 
 const ALL_KEYS = [
   "A",
@@ -136,8 +136,7 @@ export default class WindowNumberingExtension extends Extension {
     allPreviews.forEach((preview) => {
       const metaWin = preview.metaWindow || preview._metaWindow;
       if (!metaWin || !eligibleWindows.has(metaWin)) return;
-      if (typeof preview.get_mapped === "function" && !preview.get_mapped())
-        return;
+      if (!this._isPreviewVisuallyPresent(preview)) return;
 
       let keyChar = reservedWindowToKey.get(metaWin);
 
@@ -173,6 +172,27 @@ export default class WindowNumberingExtension extends Extension {
     });
 
     this._onSearchChanged();
+  }
+
+  _isPreviewVisuallyPresent(preview) {
+    if (!preview) return false;
+
+    if (typeof preview.get_mapped === "function" && !preview.get_mapped())
+      return false;
+    if (typeof preview.is_visible === "function" && !preview.is_visible())
+      return false;
+    if (
+      typeof preview.get_paint_opacity === "function" &&
+      preview.get_paint_opacity() === 0
+    )
+      return false;
+
+    if (typeof preview.get_transformed_size === "function") {
+      const [width, height] = preview.get_transformed_size();
+      if (width <= 0 || height <= 0) return false;
+    }
+
+    return true;
   }
 
   _refreshReservedWindowsMap() {
