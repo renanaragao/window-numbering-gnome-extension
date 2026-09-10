@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.2.1 - Reserved Keys Protected & Selection Cleanup";
+  "v2.3.2 - Workspace Preview Redraw & Global Free Shortcuts";
 
 const ALL_KEYS = [
   "A",
@@ -45,13 +45,22 @@ export default class WindowNumberingExtension extends Extension {
     this._windowsMap = new Map();
     this._reservedWindowsMap = new Map();
     this._reservedKeysInUse = new Set();
+    this._freeKeyToWindow = new Map();
+    this._freeWindowToKey = new Map();
+    this._workspaceRedrawId = 0;
 
     this._shownId = Main.overview.connect("shown", () => this._drawLabels());
     this._hidingId = Main.overview.connect("hiding", () => this._clearLabels());
     this._workspaceSwitchedId = global.workspace_manager.connect(
       "active-workspace-changed",
       () => {
-        if (Main.overview.visible) this._drawLabels();
+        if (Main.overview.visible) this._scheduleWorkspaceRedraw();
+      },
+    );
+    this._windowUnmanagedId = global.display.connect(
+      "window-unmanaged",
+      (_, win) => {
+        this._removeWindowAssignments(win);
       },
     );
 
@@ -72,6 +81,8 @@ export default class WindowNumberingExtension extends Extension {
     if (this._hidingId) Main.overview.disconnect(this._hidingId);
     if (this._workspaceSwitchedId)
       global.workspace_manager.disconnect(this._workspaceSwitchedId);
+    if (this._windowUnmanagedId)
+      global.display.disconnect(this._windowUnmanagedId);
 
     const searchEntry = Main.overview.searchEntry;
     if (this._searchId && searchEntry) {
@@ -80,6 +91,9 @@ export default class WindowNumberingExtension extends Extension {
 
     this._clearLabels();
     this._removeKeyHandler();
+    this._freeKeyToWindow.clear();
+    this._freeWindowToKey.clear();
+    this._cancelWorkspaceRedraw();
   }
 
   // Carrega e faz o parse do config.json em tempo de execução
@@ -115,6 +129,7 @@ export default class WindowNumberingExtension extends Extension {
   }
 
   _drawLabels() {
+    this._cancelWorkspaceRedraw();
     this._clearLabels();
     this._windowsMap.clear();
 
@@ -134,10 +149,17 @@ export default class WindowNumberingExtension extends Extension {
       this._windowsMap.set(key, win);
     });
 
+    this._cleanupFreeAssignments(reservedKeysInUse);
+
     const allPreviews = this._findPreviews(Main.layoutManager.overviewGroup);
 
     // PASSO 2: Define o pool de chaves livres (exclui as reservadas)
-    const availableKeys = ALL_KEYS.filter((k) => !reservedKeysInUse.has(k));
+    const availableKeys = ALL_KEYS.filter(
+      (k) =>
+        !reservedKeysInUse.has(k) &&
+        !this._freeKeyToWindow.has(k) &&
+        !this._reservedWindowsMap.has(k),
+    );
     let freeKeyIndex = 0;
 
     // PASSO 3: Atribui as chaves restantes sequencialmente e desenha as badges
@@ -149,9 +171,15 @@ export default class WindowNumberingExtension extends Extension {
       let keyChar = reservedWindowToKey.get(metaWin);
 
       if (!keyChar) {
+        keyChar = this._freeWindowToKey.get(metaWin);
+      }
+
+      if (!keyChar) {
         if (freeKeyIndex >= availableKeys.length) return;
         keyChar = availableKeys[freeKeyIndex];
         freeKeyIndex++;
+        this._freeKeyToWindow.set(keyChar, metaWin);
+        this._freeWindowToKey.set(metaWin, keyChar);
       }
 
       // Registra no mapa global (salva em maiúsculo para combinar com o Shift)
@@ -180,6 +208,16 @@ export default class WindowNumberingExtension extends Extension {
     });
 
     this._onSearchChanged();
+  }
+
+  _scheduleWorkspaceRedraw() {
+    if (this._workspaceRedrawId) return;
+
+    this._workspaceRedrawId = GLib.idle_add(GLib.PRIORITY_DEFAULT_IDLE, () => {
+      this._workspaceRedrawId = 0;
+      if (Main.overview.visible) this._drawLabels();
+      return GLib.SOURCE_REMOVE;
+    });
   }
 
   _isPreviewVisuallyPresent(preview) {
@@ -361,9 +399,12 @@ export default class WindowNumberingExtension extends Extension {
 
       let win = null;
       if (isOverviewVisible) {
-        win = this._windowsMap.get(keyName) || this._reservedWindowsMap.get(keyName);
+        win =
+          this._windowsMap.get(keyName) ||
+          this._reservedWindowsMap.get(keyName) ||
+          this._freeKeyToWindow.get(keyName);
       } else {
-        win = this._reservedWindowsMap.get(keyName);
+        win = this._reservedWindowsMap.get(keyName) || this._freeKeyToWindow.get(keyName);
       }
 
       if (win) {
@@ -387,5 +428,55 @@ export default class WindowNumberingExtension extends Extension {
     this._labels.forEach((l) => l.destroy());
     this._labels = [];
     this._windowsMap.clear();
+  }
+
+  _cancelWorkspaceRedraw() {
+    if (!this._workspaceRedrawId) return;
+    GLib.source_remove(this._workspaceRedrawId);
+    this._workspaceRedrawId = 0;
+  }
+
+  _cleanupFreeAssignments(reservedKeysInUse = new Set()) {
+    for (const [key, win] of this._freeKeyToWindow.entries()) {
+      if (reservedKeysInUse.has(key)) {
+        this._freeKeyToWindow.delete(key);
+        this._freeWindowToKey.delete(win);
+        continue;
+      }
+      if (this._isWindowAlive(win)) continue;
+      this._freeKeyToWindow.delete(key);
+      this._freeWindowToKey.delete(win);
+    }
+  }
+
+  _removeWindowAssignments(win) {
+    if (!win) return;
+
+    for (const [key, assignedWin] of this._freeKeyToWindow.entries()) {
+      if (assignedWin !== win) continue;
+      this._freeKeyToWindow.delete(key);
+    }
+    this._freeWindowToKey.delete(win);
+
+    for (const [key, assignedWin] of this._reservedWindowsMap.entries()) {
+      if (assignedWin !== win) continue;
+      this._reservedWindowsMap.delete(key);
+    }
+
+    for (const [key, assignedWin] of this._windowsMap.entries()) {
+      if (assignedWin !== win) continue;
+      this._windowsMap.delete(key);
+    }
+  }
+
+  _isWindowAlive(win) {
+    if (!win) return false;
+
+    try {
+      if (typeof win.get_compositor_private !== "function") return true;
+      return win.get_compositor_private() !== null;
+    } catch (e) {
+      return false;
+    }
   }
 }

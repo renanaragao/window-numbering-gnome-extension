@@ -9,7 +9,8 @@ instantaneamente usando combinações de teclado com `Shift`.
 1. **Visão Geral (Overview):** Ao abrir a Visão Geral (pressionando a tecla
    `Super` / `Windows`), etiquetas visuais em tom azul aparecem no canto
    superior esquerdo das miniaturas de janela do **workspace ativo** na
-   Overview.
+   Overview, e são redesenhadas automaticamente quando você troca o workspace
+   com a Overview aberta.
 2. **Atalho via Shift:** Pressione **`Shift + [LETRA]`** para focar a janela
    associada, mesmo quando ela estiver em outro workspace (o GNOME alterna de
    workspace ao ativar a janela).
@@ -21,7 +22,9 @@ instantaneamente usando combinações de teclado com `Shift`.
    navegação são desativados temporariamente.
 5. **Reserva Fixa (JSON):** Janelas configuradas no arquivo de regras sempre
    recebem a mesma letra reservada. As janelas restantes recebem as letras
-   livres do alfabeto sequencialmente.
+   livres do alfabeto sequencialmente e, depois de atribuídas, essas letras
+   também podem ser usadas globalmente para abrir a mesma janela em qualquer
+   workspace.
 
 ---
 
