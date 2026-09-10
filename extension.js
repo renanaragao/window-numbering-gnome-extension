@@ -7,8 +7,8 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.3.4 - Retry Workspace Preview Redraw After Overview Settling";
-const WORKSPACE_REDRAW_DELAY_MS = 500;
+  "v2.3.5 - Immediate Clear and 300ms Workspace Redraw";
+const WORKSPACE_REDRAW_DELAY_MS = 300;
 
 const ALL_KEYS = [
   "A",
@@ -56,7 +56,10 @@ export default class WindowNumberingExtension extends Extension {
     this._workspaceSwitchedId = global.workspace_manager.connect(
       "active-workspace-changed",
       () => {
-        if (Main.overview.visible) this._scheduleWorkspaceRedraw();
+        if (Main.overview.visible) {
+          this._clearLabels();
+          this._scheduleWorkspaceRedraw();
+        }
       },
     );
     this._windowUnmanagedId = global.display.connect(
