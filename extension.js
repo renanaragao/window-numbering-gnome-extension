@@ -7,7 +7,7 @@ import Gio from "gi://Gio";
 import GLib from "gi://GLib";
 
 const VERSION =
-  "v2.3.5 - Immediate Clear and 300ms Workspace Redraw";
+  "v2.3.6 - Global Key Recovery and Search Label Restore";
 const WORKSPACE_REDRAW_DELAY_MS = 300;
 
 const ALL_KEYS = [
@@ -50,8 +50,13 @@ export default class WindowNumberingExtension extends Extension {
     this._freeWindowToKey = new Map();
     this._workspaceRedrawId = 0;
     this._workspaceRedrawAttempts = 0;
+    this._searchEntry = null;
+    this._searchId = 0;
 
-    this._shownId = Main.overview.connect("shown", () => this._drawLabels());
+    this._shownId = Main.overview.connect("shown", () => {
+      this._ensureSearchSignal();
+      this._drawLabels();
+    });
     this._hidingId = Main.overview.connect("hiding", () => this._clearLabels());
     this._workspaceSwitchedId = global.workspace_manager.connect(
       "active-workspace-changed",
@@ -69,13 +74,7 @@ export default class WindowNumberingExtension extends Extension {
       },
     );
 
-    const searchEntry = Main.overview.searchEntry;
-    if (searchEntry) {
-      this._searchId = searchEntry.clutter_text.connect("text-changed", () => {
-        this._onSearchChanged();
-      });
-    }
-
+    this._ensureSearchSignal();
     this._refreshReservedWindowsMap();
     this._setupKeyHandler();
   }
@@ -89,10 +88,7 @@ export default class WindowNumberingExtension extends Extension {
     if (this._windowUnmanagedId)
       global.display.disconnect(this._windowUnmanagedId);
 
-    const searchEntry = Main.overview.searchEntry;
-    if (this._searchId && searchEntry) {
-      searchEntry.clutter_text.disconnect(this._searchId);
-    }
+    this._disconnectSearchSignal();
 
     this._clearLabels();
     this._removeKeyHandler();
@@ -124,8 +120,37 @@ export default class WindowNumberingExtension extends Extension {
     return { reserved_rules: [] };
   }
 
+  _ensureSearchSignal() {
+    const searchEntry = Main.overview.searchEntry;
+    if (!searchEntry) return;
+
+    if (this._searchEntry === searchEntry && this._searchId) return;
+
+    this._disconnectSearchSignal();
+    this._searchEntry = searchEntry;
+    this._searchId = searchEntry.clutter_text.connect("text-changed", () => {
+      this._onSearchChanged();
+    });
+  }
+
+  _disconnectSearchSignal() {
+    if (
+      this._searchEntry &&
+      this._searchId &&
+      this._searchEntry.clutter_text
+    ) {
+      this._searchEntry.clutter_text.disconnect(this._searchId);
+    }
+
+    this._searchEntry = null;
+    this._searchId = 0;
+  }
+
   _onSearchChanged() {
-    const searchText = Main.overview.searchEntry.get_text().trim();
+    const searchEntry = Main.overview.searchEntry;
+    if (!searchEntry) return;
+
+    const searchText = searchEntry.get_text().trim();
     const isSearching = searchText.length > 0;
 
     this._labels.forEach((label) => {
@@ -297,24 +322,14 @@ export default class WindowNumberingExtension extends Extension {
   }
 
   _collectEligibleWindows() {
-    const workspaceManager = global.workspace_manager;
     const windows = new Set();
+    const mruWindows = global.display.get_tab_list(Meta.TabList.NORMAL_ALL, null);
 
-    for (let i = 0; i < workspaceManager.n_workspaces; i++) {
-      const workspace = workspaceManager.get_workspace_by_index(i);
-      if (!workspace) continue;
-
-      const workspaceWindows = workspace.list_windows();
-      workspaceWindows.forEach((win) => {
-        if (!win || win.is_skip_taskbar()) return;
-        if (
-          typeof win.showing_on_its_workspace === "function" &&
-          !win.showing_on_its_workspace()
-        )
-          return;
-        windows.add(win);
-      });
-    }
+    mruWindows.forEach((win) => {
+      if (!win || win.is_skip_taskbar()) return;
+      if (!this._isWindowAlive(win)) return;
+      windows.add(win);
+    });
 
     return windows;
   }
